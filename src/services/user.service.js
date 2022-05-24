@@ -1,5 +1,5 @@
 const httpStatus = require('http-status');
-const { User } = require('../models');
+const { User } = require('../models/sequelize');
 const ApiError = require('../utils/ApiError');
 
 /**
@@ -16,7 +16,9 @@ const createUser = async (userBody) => {
 
 /**
  * Query for users
- * @param {Object} filter - Mongo filter
+ * @param {Object} filter - filter
+ * @param {string} [filter.name] - name field
+ * @param {string} [filter.role] - role field
  * @param {Object} options - Query options
  * @param {string} [options.sortBy] - Sort option in the format: sortField:(desc|asc)
  * @param {number} [options.limit] - Maximum number of results per page (default = 10)
@@ -34,16 +36,37 @@ const queryUsers = async (filter, options) => {
  * @returns {Promise<User>}
  */
 const getUserById = async (id) => {
-  return User.findById(id);
+  return User.findOne({
+    where: {
+      id,
+    },
+  });
 };
 
 /**
- * Get user by email
+ * Get user by email without password field
  * @param {string} email
  * @returns {Promise<User>}
  */
 const getUserByEmail = async (email) => {
-  return User.findOne({ email });
+  return User.findOne({
+    where: {
+      email,
+    },
+  });
+};
+
+/**
+ * Get user by email with password field
+ * @param {string} email
+ * @returns {Promise<User>}
+ */
+const getUserByEmailWithPassword = async (email) => {
+  return User.scope('includePassword').findOne({
+    where: {
+      email,
+    },
+  });
 };
 
 /**
@@ -75,7 +98,7 @@ const deleteUserById = async (userId) => {
   if (!user) {
     throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
   }
-  await user.remove();
+  await user.destroy();
   return user;
 };
 
@@ -84,6 +107,7 @@ module.exports = {
   queryUsers,
   getUserById,
   getUserByEmail,
+  getUserByEmailWithPassword,
   updateUserById,
   deleteUserById,
 };
