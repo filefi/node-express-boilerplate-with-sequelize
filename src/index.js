@@ -1,4 +1,5 @@
 // const mongoose = require('mongoose');
+const sequelize = require('./models/sequelize').db;
 const app = require('./app');
 const config = require('./config/config');
 const logger = require('./config/logger');
@@ -14,6 +15,9 @@ server = app.listen(config.port, () => {
 const exitHandler = () => {
   if (server) {
     server.close(() => {
+      sequelize.close().then(() => {
+        logger.info('Sequelize closed db gracefully.');
+      });
       logger.info('Server closed');
       process.exit(1);
     });
